@@ -35,7 +35,16 @@ if st.session_state.auth_token:
     # 导航菜单
     page = st.sidebar.radio(
         "导航菜单",
-        ["📊 首页", "📁 项目管理", "📤 数据上传", "📈 曲线分析", "🤖 AI预测", "🎓 模型训练"]
+        [
+            "📊 首页",
+            "📁 项目管理",
+            "📤 数据上传",
+            "📈 曲线分析",
+            "🎯 3D 可视化",
+            "🔴 实时数据",
+            "🤖 AI预测",
+            "🎓 模型训练",
+        ]
     )
 else:
     st.sidebar.warning("⚠️ 请先登录才能继续使用应用")
@@ -84,6 +93,8 @@ if page == "📊 首页":
         "📁 项目管理": "创建和管理多个地球物理项目",
         "📤 数据上传": "支持 LAS、CSV 和 Excel 格式的测井数据",
         "📈 曲线分析": "交互式测井曲线可视化和对比分析",
+        "🎯 3D 可视化": "三维交互式曲线与钻孔轨迹",
+        "🔴 实时数据": "实时流式数据与性能监控",
         "🤖 AI预测": "使用机器学习模型预测缺失的曲线",
         "🎓 模型训练": "使用你的数据训练自定义 AI 模型"
     }
@@ -105,6 +116,14 @@ elif page == "📤 数据上传":
 # 曲线分析页面
 elif page == "📈 曲线分析":
     st.switch_page("pages/04_analysis.py")
+
+# 3D 可视化页面
+elif page == "🎯 3D 可视化":
+    st.switch_page("pages/07_3d_visualization.py")
+
+# 实时数据页面
+elif page == "🔴 实时数据":
+    st.switch_page("pages/09_realtime_data.py")
 
 # AI预测页面
 elif page == "🤖 AI预测":
