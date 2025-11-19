@@ -332,3 +332,5 @@ uvicorn app.main:app --reload --port 8000
 
 **GeologAI WebOS - 地球物理测井AI分析平台**  
 版本: 1.0.0 | 最后更新: 2025年11月19日
+#   G e o l o g A I  
+ 
