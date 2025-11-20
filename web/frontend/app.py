@@ -31,7 +31,7 @@ st.markdown("""
     
     /* 侧边栏样式 */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        background: white;
     }
     
     /* 主容器 */
@@ -185,9 +185,8 @@ st.markdown("""
         line-height: 1.6;
     }
     
-    /* 用户信息样式 */
     .user-info {
-        background: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 1rem;
         border-radius: 8px;
@@ -354,7 +353,7 @@ def render_sidebar():
     """渲染侧边栏"""
     with st.sidebar:
         st.markdown("""
-        <div style="font-size: 24px; font-weight: 800; margin-bottom: 1.5rem; color: #3498db; text-align: center;">
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 1.5rem; color: #667eea; text-align: center;">
             🌍 GeologAI
         </div>
         """, unsafe_allow_html=True)
@@ -372,14 +371,14 @@ def render_sidebar():
             st.markdown("---")
             
             # 导航菜单
-            st.markdown('<div style="color: #3498db; font-weight: 700; margin-bottom: 1rem;">📋 导航菜单</div>', unsafe_allow_html=True)
+            st.markdown('<div style="color: #667eea; font-weight: 700; margin-bottom: 1rem;">📋 导航菜单</div>', unsafe_allow_html=True)
             
             nav_items = [
                 ("📊 仪表板", "dashboard"),
                 ("📁 项目管理", "projects"),
                 ("📤 数据上传", "data_upload"),
                 ("📈 数据分析", "analysis"),
-                ("🤖 AI 预测", "predictions"),
+                ("🤖 人工智能预测", "predictions"),
                 ("🎓 模型训练", "training"),
             ]
             
@@ -393,13 +392,13 @@ def render_sidebar():
             st.markdown("---")
             
             # 用户操作
-            st.markdown('<div style="color: #3498db; font-weight: 700; margin-bottom: 1rem;">⚙️ 设置</div>', unsafe_allow_html=True)
+            st.markdown('<div style="color: #667eea; font-weight: 700; margin-bottom: 1rem;">⚙️ 设置</div>', unsafe_allow_html=True)
             
             if st.button("🚪 退出登录", use_container_width=True):
                 logout_user()
         else:
             # 未登录状态
-            st.markdown('<div style="color: #3498db; font-weight: 700; margin-bottom: 1rem;">👤 用户</div>', unsafe_allow_html=True)
+            st.markdown('<div style="color: #667eea; font-weight: 700; margin-bottom: 1rem;">👤 用户</div>', unsafe_allow_html=True)
             
             if st.button("🔐 登录", use_container_width=True, type="primary"):
                 st.session_state.current_page = "login"
@@ -411,61 +410,12 @@ def render_sidebar():
             
             st.markdown("---")
             st.markdown("""
-            <div style="color: #95a5a6; font-size: 12px; line-height: 1.6; margin-top: 2rem;">
+            <div style="color: #7f8c8d; font-size: 12px; line-height: 1.6; margin-top: 2rem;">
                 💡 <b>提示</b>: 点击 <b>登录</b> 或 <b>注册</b> 按钮开始使用 GeologAI 平台
             </div>
             """, unsafe_allow_html=True)
 
 # ======================== 页面内容 ========================
-
-def page_home():
-    """首页"""
-    st.markdown("""
-    <div class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: -2rem -2rem 0; padding: 5rem 2rem; border-radius: 0;">
-        <h1 class="hero-title">🌍 GeologAI</h1>
-        <p class="hero-subtitle">
-            AI 驱动的地质智能分析平台
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="features-section">
-        <h2 class="section-title">核心功能</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📁</div>
-                <div class="feature-name">项目管理</div>
-                <div class="feature-desc">创建和管理多个地球物理项目</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📤</div>
-                <div class="feature-name">数据上传</div>
-                <div class="feature-desc">支持 LAS、CSV 和 Excel 格式</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📈</div>
-                <div class="feature-name">数据分析</div>
-                <div class="feature-desc">交互式可视化与对比分析</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🤖</div>
-                <div class="feature-name">AI 预测</div>
-                <div class="feature-desc">机器学习驱动的预测分析</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎓</div>
-                <div class="feature-name">模型训练</div>
-                <div class="feature-desc">自定义AI模型训练与优化</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-name">3D 可视化</div>
-                <div class="feature-desc">三维交互式数据展示</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 def page_login():
     """登录页面"""
@@ -500,7 +450,7 @@ def page_login():
         
         with col2:
             if st.button("返回", use_container_width=True):
-                st.session_state.current_page = "home"
+                st.session_state.current_page = "register"
                 st.rerun()
 
 def page_register():
@@ -537,8 +487,8 @@ def page_register():
                             st.error(f"❌ {message}")
         
         with col2:
-            if st.button("返回", use_container_width=True):
-                st.session_state.current_page = "home"
+            if st.button("返回登录", use_container_width=True):
+                st.session_state.current_page = "login"
                 st.rerun()
 
 def page_dashboard():
@@ -625,7 +575,7 @@ def page_projects():
         
         if projects:
             for project in projects:
-                project_name = project.get('name', 'Untitled')
+                project_name = project.get('name', '未命名')
                 project_type = project.get('type', '')
                 project_desc = project.get('description', '')
                 
@@ -689,7 +639,7 @@ def page_data_upload():
     for p in projects:
         p_id = p.get('id') or p.get('project_id')
         if p_id:
-            project_dict[p_id] = p.get('name', 'Untitled')
+            project_dict[p_id] = p.get('name', '未命名')
     
     if not project_dict:
         st.warning("⚠️ 项目列表为空")
@@ -743,7 +693,7 @@ def page_analysis():
     for p in projects:
         p_id = p.get('id') or p.get('project_id')
         if p_id:
-            project_dict[p_id] = p.get('name', 'Untitled')
+            project_dict[p_id] = p.get('name', '未命名')
     
     if not project_dict:
         st.warning("⚠️ 项目列表为空")
@@ -794,10 +744,10 @@ def page_analysis():
             st.success("✅ 分析完成！")
 
 def page_predictions():
-    """AI 预测"""
+    """人工智能预测"""
     st.markdown("""
     <div class="header-container">
-        <div class="header-title">🤖 AI 预测</div>
+        <div class="header-title">🤖 人工智能预测</div>
         <div class="header-subtitle">使用机器学习进行预测分析</div>
     </div>
     """, unsafe_allow_html=True)
@@ -825,12 +775,10 @@ def main():
     
     # 根据页面状态显示对应内容
     if not st.session_state.auth_token:
-        if st.session_state.current_page == "login":
-            page_login()
-        elif st.session_state.current_page == "register":
+        if st.session_state.current_page == "register":
             page_register()
         else:
-            page_home()
+            page_login()
     else:
         if st.session_state.current_page == "projects":
             page_projects()
