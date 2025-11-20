@@ -18,9 +18,9 @@ st.set_page_config(
 )
 
 # API 配置
-API_BASE_URL = "http://127.0.0.1:8000"
-DATA_ENDPOINT = f"{API_BASE_URL}/api/data"
-ANALYSIS_ENDPOINT = f"{API_BASE_URL}/api/analysis"
+API_BASE_URL = "http://127.0.0.1:8001"
+DATA_ENDPOINT = f"{API_BASE_URL}/api/v1/data"
+ANALYSIS_ENDPOINT = f"{API_BASE_URL}/api/v1/analysis"
 
 # 验证认证
 if not st.session_state.get("auth_token"):
@@ -43,7 +43,7 @@ def get_projects():
     """获取项目列表"""
     try:
         response = requests.get(
-            f"{API_BASE_URL}/api/projects",
+            f"{API_BASE_URL}/api/v1/projects",
             headers=headers,
             timeout=10
         )

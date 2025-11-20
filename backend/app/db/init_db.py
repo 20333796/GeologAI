@@ -30,32 +30,46 @@ def create_sample_data():
     try:
         db = SessionLocal()
         
-        # Check if sample data already exists
-        user_count = db.query(User).count()
-        if user_count > 0:
-            logger.info("Sample data already exists")
+        # Check if demo user already exists
+        demo_user = db.query(User).filter(User.username == "demo_user").first()
+        if demo_user:
+            logger.info("Demo user already exists")
+            db.close()
             return
         
-        logger.info("Creating sample data...")
+        logger.info("Creating demo user...")
         
-        # Create sample admin user
+        # Create demo user
         from app.core.security import SecurityUtility
         
-        admin_user = User(
-            username="admin",
-            email="admin@geologai.com",
-            password_hash=SecurityUtility.hash_password("Admin@123456"),
-            real_name="Administrator",
-            role="admin",
+        demo = User(
+            username="demo_user",
+            email="demo@geologai.com",
+            password_hash=SecurityUtility.hash_password("DemoUser123"),
+            real_name="演示用户",
+            role="user",
             status="active"
         )
-        db.add(admin_user)
-        db.commit()
+        db.add(demo)
         
-        logger.info("✅ Sample data created successfully")
+        # Create admin user if not exists
+        admin_user = db.query(User).filter(User.username == "admin").first()
+        if not admin_user:
+            admin = User(
+                username="admin",
+                email="admin@geologai.com",
+                password_hash=SecurityUtility.hash_password("Admin@123456"),
+                real_name="Administrator",
+                role="admin",
+                status="active"
+            )
+            db.add(admin)
+        
+        db.commit()
+        logger.info("✅ Demo user created successfully")
         
     except Exception as e:
-        logger.error(f"❌ Failed to create sample data: {e}")
+        logger.error(f"❌ Failed to create demo user: {e}")
         db.rollback()
         raise
     finally:

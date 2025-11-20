@@ -17,9 +17,9 @@ st.set_page_config(
 )
 
 # API 配置
-API_BASE_URL = "http://127.0.0.1:8000"
-DATA_ENDPOINT = f"{API_BASE_URL}/api/data"
-PROJECTS_ENDPOINT = f"{API_BASE_URL}/api/projects"
+API_BASE_URL = "http://127.0.0.1:8001"
+DATA_ENDPOINT = f"{API_BASE_URL}/api/v1/data"
+PROJECTS_ENDPOINT = f"{API_BASE_URL}/api/v1/projects"
 
 # 验证认证
 if not st.session_state.get("auth_token"):
@@ -37,8 +37,7 @@ headers = {
 }
 
 # ======================== 获取项目列表 ========================
-@st.cache_data(ttl=30)
-def get_projects():
+def get_projects(use_cache=True):
     """从后端获取项目列表"""
     try:
         response = requests.get(
@@ -53,12 +52,23 @@ def get_projects():
     except:
         return {}
 
+# 初始化session_state标志
+if "refresh_projects" not in st.session_state:
+    st.session_state.refresh_projects = False
+
+# 获取项目列表
 projects_dict = get_projects()
 
 if not projects_dict:
     st.warning("⚠️ 请先创建项目")
-    if st.button("创建项目"):
-        st.switch_page("pages/02_projects.py")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("➕ 创建项目", use_container_width=True, type="primary"):
+            st.session_state.refresh_projects = True
+            st.switch_page("pages/02_dashboard.py")
+    with col2:
+        if st.button("🔄 刷新项目列表", use_container_width=True):
+            st.rerun()
     st.stop()
 
 # ======================== 数据上传表单 ========================
@@ -254,7 +264,7 @@ st.markdown("---")
 col1, col2, col3 = st.columns(3)
 with col1:
     if st.button("📁 项目管理", use_container_width=True):
-        st.switch_page("pages/02_projects.py")
+        st.switch_page("pages/02_dashboard.py")
 with col2:
     st.caption("💡 支持格式: LAS, CSV, XLSX, XLS")
 with col3:

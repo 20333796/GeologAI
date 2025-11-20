@@ -19,8 +19,8 @@ st.set_page_config(
 )
 
 # API 配置
-API_BASE_URL = "http://127.0.0.1:8000"
-STREAM_ENDPOINT = f"{API_BASE_URL}/api/data/stream"
+API_BASE_URL = "http://127.0.0.1:8001"
+STREAM_ENDPOINT = f"{API_BASE_URL}/api/v1/data/stream"
 
 # 验证认证
 if not st.session_state.get("auth_token"):

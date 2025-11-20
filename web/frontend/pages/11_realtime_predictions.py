@@ -18,8 +18,8 @@ st.set_page_config(
 )
 
 # API 配置
-API_BASE_URL = "http://127.0.0.1:8000"
-PREDICT_ENDPOINT = f"{API_BASE_URL}/api/predictions"
+API_BASE_URL = "http://127.0.0.1:8001"
+PREDICT_ENDPOINT = f"{API_BASE_URL}/api/v1/predictions"
 
 # 验证认证
 if not st.session_state.get("auth_token"):

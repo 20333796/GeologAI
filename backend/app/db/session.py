@@ -13,20 +13,32 @@ DATABASE_URL = os.getenv(
     "mysql+pymysql://root:password@localhost:3306/geologai"
 )
 
-# Create Engine with connection pooling
-engine = create_engine(
-    DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=20,
-    max_overflow=40,
-    pool_recycle=3600,
-    pool_pre_ping=True,
-    echo=False,
-    connect_args={
+# Determine connect_args based on driver (SQLite doesn't accept charset/connect_timeout)
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite specific args
+    connect_args = {"check_same_thread": False}
+    engine = create_engine(
+        DATABASE_URL,
+        echo=False,
+        connect_args=connect_args,
+    )
+else:
+    # Default (MySQL / other) connection args and pooling
+    connect_args = {
         "charset": "utf8mb4",
         "connect_timeout": 10,
     }
-)
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=QueuePool,
+        pool_size=20,
+        max_overflow=40,
+        pool_recycle=3600,
+        pool_pre_ping=True,
+        echo=False,
+        connect_args=connect_args,
+    )
 
 # Create Session Factory
 SessionLocal = sessionmaker(

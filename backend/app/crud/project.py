@@ -4,7 +4,7 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from app.models import Project
+from app.models import Project, ProjectStatus
 from app.schemas import ProjectCreate, ProjectUpdate
 
 
@@ -22,7 +22,7 @@ class ProjectCRUD:
             depth_to=project.depth_to,
             well_diameter=project.well_diameter,
             owner_id=owner_id,
-            status="planning"
+            status=ProjectStatus.PLANNING
         )
         db.add(db_project)
         db.commit()

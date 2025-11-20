@@ -99,7 +99,7 @@ def create_project(
     - **well_diameter**: 井径
     """
     # 使用服务层创建项目
-    result = ProjectService.create_project(db, current_user.id, project_data)
+    result = ProjectService.create_project(db, project_data, current_user.id)
     
     if not result.get("success"):
         raise HTTPException(
