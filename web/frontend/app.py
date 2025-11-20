@@ -1,118 +1,110 @@
+"""
+GeologAI 主应用 - 完整功能的地质智能分析平台
+支持认证、项目管理、数据上传、分析等核心功能
+"""
+
 import streamlit as st
 import requests
 import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime
-import json
+import time
 
+# ======================== 页面配置 ========================
 st.set_page_config(
     page_title="GeologAI - AI驱动的测井分析平台",
     page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# ======================== API配置 ========================
+# ======================== API 配置 ========================
 API_BASE_URL = "http://127.0.0.1:8001"
-AUTH_ENDPOINT = f"{API_BASE_URL}/api/v1/auth"
+API_VERSION = "v1"
 
 # ======================== 页面样式 ========================
 st.markdown("""
 <style>
     /* 全局样式 */
     html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
-    /* 隐藏默认元素 */
-    [data-testid="stSidebarNav"] { display: none; }
-    [data-testid="stToolbar"] { visibility: hidden; }
+    /* 侧边栏样式 */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    }
     
-    /* 主容器背景 */
+    /* 主容器 */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
     }
     
-    /* 顶部导航栏 */
-    .navbar {
-        position: sticky;
-        top: 0;
+    /* 头部卡片 */
+    .header-container {
         background: white;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        padding: 1rem 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 999;
+        padding: 1.5rem 2rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
-    .navbar-logo {
-        font-size: 24px;
+    .header-title {
+        font-size: 32px;
         font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    .navbar-tagline {
-        font-size: 12px;
-        color: #999;
-        margin-left: 0.5rem;
-    }
-    
-    .auth-buttons-group {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-    
-    .btn-outline {
-        background: white;
-        color: #667eea;
-        border: 2px solid #667eea;
-        padding: 10px 24px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-outline:hover {
-        background: #667eea;
-        color: white;
-    }
-    
-    .btn-solid {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-solid:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    .user-badge {
-        background: #f0f0f0;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 14px;
         color: #2c3e50;
-        font-weight: 600;
+        margin: 0;
     }
     
-    /* 英雄区域 */
+    .header-subtitle {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-top: 0.5rem;
+    }
+    
+    /* 通用卡片 */
+    .card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.8rem;
+    }
+    
+    /* 指标卡片 */
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    /* 首页英雄区 */
     .hero {
         text-align: center;
         padding: 5rem 2rem;
@@ -137,34 +129,7 @@ st.markdown("""
         margin-right: auto;
     }
     
-    .hero-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .btn-large {
-        padding: 14px 32px;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-white {
-        background: white;
-        color: #667eea;
-    }
-    
-    .btn-white:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-    
-    /* 功能网格 */
+    /* 功能卡片网格 */
     .features-section {
         background: white;
         border-radius: 20px;
@@ -194,7 +159,6 @@ st.markdown("""
         padding: 2rem;
         text-align: center;
         transition: all 0.3s ease;
-        cursor: pointer;
     }
     
     .feature-card:hover {
@@ -221,429 +185,250 @@ st.markdown("""
         line-height: 1.6;
     }
     
-    /* 模态框 */
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 2000;
-        backdrop-filter: blur(4px);
-    }
-    
-    .modal {
-        background: white;
-        border-radius: 16px;
-        padding: 3rem;
-        max-width: 480px;
-        width: 90%;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        animation: slideUp 0.3s ease;
-    }
-    
-    @keyframes slideUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    
-    .modal-close {
-        position: absolute;
-        top: 1.5rem;
-        right: 1.5rem;
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #999;
-    }
-    
-    .modal-title {
-        font-size: 28px;
-        font-weight: 800;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-    
-    .modal-subtitle {
-        font-size: 14px;
-        color: #999;
-        margin-bottom: 2rem;
-    }
-    
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-    
-    .form-input {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #f0f0f0;
-        border-radius: 8px;
-        font-size: 14px;
-        font-family: inherit;
-        transition: border-color 0.3s;
-        box-sizing: border-box;
-    }
-    
-    .form-input:focus {
-        outline: none;
-        border-color: #667eea;
-    }
-    
-    .form-error {
-        color: #e74c3c;
-        font-size: 12px;
-        margin-top: 0.5rem;
-    }
-    
-    .form-button {
-        width: 100%;
-        padding: 12px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* 用户信息样式 */
+    .user-info {
+        background: rgba(255, 255, 255, 0.1);
         color: white;
-        border: none;
+        padding: 1rem;
         border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
+        margin-bottom: 1rem;
     }
     
-    .form-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    }
-    
-    .tab-switcher {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        border-bottom: 2px solid #f0f0f0;
-    }
-    
-    .tab-button {
-        background: none;
-        border: none;
-        padding: 12px 0;
-        margin-bottom: -2px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #999;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.3s;
-    }
-    
-    .tab-button.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
-    }
-    
-    /* Dashboard */
-    .dashboard-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: white;
-        padding: 2rem;
-        border-radius: 16px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    
-    .welcome-text {
-        font-size: 28px;
-        font-weight: 800;
-        color: #2c3e50;
-    }
-    
-    .dashboard-modules {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-    }
-    
-    .module-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .module-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-    }
-    
-    .module-icon {
-        font-size: 44px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .module-name {
+    .user-name {
         font-size: 16px;
         font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.3rem;
     }
     
-    .module-desc {
+    .user-status {
         font-size: 12px;
-        color: #999;
+        opacity: 0.8;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ======================== 初始化Session State ========================
+# ======================== 会话状态初始化 ========================
 if "auth_token" not in st.session_state:
     st.session_state.auth_token = None
 if "user_info" not in st.session_state:
     st.session_state.user_info = None
-if "show_auth_modal" not in st.session_state:
-    st.session_state.show_auth_modal = False
-if "auth_mode" not in st.session_state:
-    st.session_state.auth_mode = "login"
-
-# 检查URL参数
-params = st.query_params
-if params.get("auth") == "login":
-    st.session_state.show_auth_modal = True
-    st.session_state.auth_mode = "login"
-    st.query_params.clear()
-elif params.get("auth") == "register":
-    st.session_state.show_auth_modal = True
-    st.session_state.auth_mode = "register"
-    st.query_params.clear()
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "home"
 
 # ======================== 工具函数 ========================
 
-def login_user(username: str, password: str):
+def get_headers():
+    """获取 API 请求头"""
+    return {
+        "Authorization": f"Bearer {st.session_state.auth_token}",
+        "Content-Type": "application/json"
+    }
+
+def login_user(username: str, password: str) -> tuple:
     """登录用户"""
     try:
         response = requests.post(
-            f"{AUTH_ENDPOINT}/login",
+            f"{API_BASE_URL}/api/{API_VERSION}/auth/login",
             json={"username": username, "password": password},
             timeout=10
         )
-        
         if response.status_code == 200:
             data = response.json()
             st.session_state.auth_token = data.get("access_token")
-            st.session_state.user_info = data.get("user", {})
-            st.session_state.show_auth_modal = False
-            st.success("✅ 登录成功！")
-            st.rerun()
+            st.session_state.user_info = {"username": username}
+            return True, "登录成功"
         else:
-            st.error(f"❌ 登录失败: {response.text}")
+            error_msg = response.json().get("detail", "登录失败")
+            return False, error_msg
     except Exception as e:
-        st.error(f"❌ 连接错误: {str(e)}")
+        return False, f"连接错误: {str(e)}"
 
-def register_user(username: str, email: str, password: str, confirm_password: str):
+def register_user(username: str, email: str, password: str, password_confirm: str) -> tuple:
     """注册用户"""
-    if password != confirm_password:
-        st.error("❌ 两次输入的密码不匹配")
-        return
+    if password != password_confirm:
+        return False, "两次输入的密码不一致"
     
     try:
         response = requests.post(
-            f"{AUTH_ENDPOINT}/register",
+            f"{API_BASE_URL}/api/{API_VERSION}/auth/register",
             json={"username": username, "email": email, "password": password},
             timeout=10
         )
-        
-        if response.status_code == 201:
-            st.success("✅ 注册成功！正在自动登录...")
-            login_user(username, password)
+        if response.status_code in [200, 201]:
+            return True, "注册成功，请登录"
         else:
-            error_data = response.json()
-            error_msg = error_data.get("detail", "未知错误")
-            st.error(f"❌ 注册失败: {error_msg}")
+            error_msg = response.json().get("detail", "注册失败")
+            return False, error_msg
     except Exception as e:
-        st.error(f"❌ 连接错误: {str(e)}")
+        return False, f"连接错误: {str(e)}"
+
+def get_projects() -> list:
+    """获取项目列表"""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/api/{API_VERSION}/projects/my-projects",
+            headers=get_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict) and "data" in data:
+                return data.get("data", [])
+            return data if isinstance(data, list) else []
+        return []
+    except Exception as e:
+        st.error(f"获取项目列表失败: {str(e)}")
+        return []
+
+def create_project(name: str, project_type: str, description: str = "") -> tuple:
+    """创建项目"""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/api/{API_VERSION}/projects",
+            json={
+                "name": name,
+                "type": project_type,
+                "description": description
+            },
+            headers=get_headers(),
+            timeout=10
+        )
+        if response.status_code in [200, 201]:
+            return True, "项目创建成功"
+        else:
+            return False, response.json().get("detail", "创建失败")
+    except Exception as e:
+        return False, f"错误: {str(e)}"
+
+def upload_data(project_id: int, well_name: str, file, description: str = "") -> tuple:
+    """上传数据"""
+    try:
+        files = {'file': (file.name, file.getbuffer(), file.type)}
+        data = {
+            'project_id': str(project_id),
+            'well_name': well_name,
+            'description': description
+        }
+        response = requests.post(
+            f"{API_BASE_URL}/api/{API_VERSION}/data/upload",
+            files=files,
+            data=data,
+            headers={"Authorization": f"Bearer {st.session_state.auth_token}"},
+            timeout=30
+        )
+        if response.status_code in [200, 201]:
+            return True, "数据上传成功"
+        else:
+            return False, response.json().get("detail", "上传失败")
+    except Exception as e:
+        return False, f"错误: {str(e)}"
+
+def get_project_data(project_id: int) -> list:
+    """获取项目数据列表"""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/api/{API_VERSION}/data?project_id={project_id}",
+            headers=get_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict) and "data" in data:
+                return data.get("data", [])
+            return data if isinstance(data, list) else []
+        return []
+    except Exception as e:
+        st.error(f"获取数据列表失败: {str(e)}")
+        return []
 
 def logout_user():
     """退出登录"""
     st.session_state.auth_token = None
     st.session_state.user_info = None
+    st.session_state.current_page = "home"
     st.rerun()
 
-# ======================== 顶部导航栏 ========================
+# ======================== 侧边栏渲染 ========================
 
-col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
-
-with col_nav1:
-    st.markdown('<div class="navbar-logo">🌍 GeologAI</div>', unsafe_allow_html=True)
-
-with col_nav3:
-    if st.session_state.auth_token:
-        col_user, col_logout = st.columns(2)
-        with col_user:
-            username = st.session_state.user_info.get("username", "User")
-            st.markdown(f'<div class="user-badge">👤 {username}</div>', unsafe_allow_html=True)
-        with col_logout:
-            if st.button("🚪 退出", use_container_width=True):
-                logout_user()
-    else:
-        col_login, col_register = st.columns(2)
-        with col_login:
-            if st.button("🔐 登录", use_container_width=True):
-                st.session_state.show_auth_modal = True
-                st.session_state.auth_mode = "login"
-        with col_register:
-            if st.button("📝 注册", use_container_width=True):
-                st.session_state.show_auth_modal = True
-                st.session_state.auth_mode = "register"
-
-st.markdown("---")
-
-# ======================== 认证模态框 ========================
-
-if st.session_state.show_auth_modal:
-    col_modal_spacer1, col_modal, col_modal_spacer2 = st.columns([1, 2, 1])
-    
-    with col_modal:
+def render_sidebar():
+    """渲染侧边栏"""
+    with st.sidebar:
         st.markdown("""
-        <div style="
-            background: white;
-            border-radius: 16px;
-            padding: 2.5rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        ">
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 1.5rem; color: #3498db; text-align: center;">
+            🌍 GeologAI
+        </div>
         """, unsafe_allow_html=True)
         
-        # 关闭按钮
-        col_close_btn = st.columns([10, 1])[1]
-        with col_close_btn:
-            if st.button("✕", key="close_modal"):
-                st.session_state.show_auth_modal = False
-                st.rerun()
-        
-        # Tab 切换
-        col_tab1, col_tab2 = st.columns(2)
-        with col_tab1:
-            if st.button(
-                "🔐 登录",
-                key="tab_login",
-                use_container_width=True,
-                type="primary" if st.session_state.auth_mode == "login" else "secondary"
-            ):
-                st.session_state.auth_mode = "login"
-                st.rerun()
-        
-        with col_tab2:
-            if st.button(
-                "📝 注册",
-                key="tab_register",
-                use_container_width=True,
-                type="primary" if st.session_state.auth_mode == "register" else "secondary"
-            ):
-                st.session_state.auth_mode = "register"
-                st.rerun()
-        
-        st.markdown("<hr style='margin: 1rem 0;'>", unsafe_allow_html=True)
-        
-        # 登录表单
-        if st.session_state.auth_mode == "login":
-            st.markdown("### 登录您的账户")
+        if st.session_state.auth_token and st.session_state.user_info:
+            # 用户信息
+            username = st.session_state.user_info.get("username", "用户")
+            st.markdown(f"""
+            <div class="user-info">
+                <div class="user-name">👤 {username}</div>
+                <div class="user-status">✅ 已登录</div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            login_username = st.text_input(
-                "用户名",
-                placeholder="输入用户名",
-                key="login_username"
-            )
-            login_password = st.text_input(
-                "密码",
-                type="password",
-                placeholder="输入密码",
-                key="login_password"
-            )
+            st.markdown("---")
             
-            col_submit1, col_submit2 = st.columns(2)
-            with col_submit1:
-                if st.button("🔓 登录", use_container_width=True, type="primary", key="login_btn"):
-                    if login_username and login_password:
-                        login_user(login_username, login_password)
-                    else:
-                        st.error("❌ 请输入用户名和密码")
+            # 导航菜单
+            st.markdown('<div style="color: #3498db; font-weight: 700; margin-bottom: 1rem;">📋 导航菜单</div>', unsafe_allow_html=True)
             
-            with col_submit2:
-                if st.button("✕ 取消", use_container_width=True, key="cancel_login"):
-                    st.session_state.show_auth_modal = False
+            nav_items = [
+                ("📊 仪表板", "dashboard"),
+                ("📁 项目管理", "projects"),
+                ("📤 数据上传", "data_upload"),
+                ("📈 数据分析", "analysis"),
+                ("🤖 AI 预测", "predictions"),
+                ("🎓 模型训练", "training"),
+            ]
+            
+            for label, page in nav_items:
+                if st.button(label, use_container_width=True, 
+                           type="primary" if st.session_state.current_page == page else "secondary",
+                           key=f"nav_{page}"):
+                    st.session_state.current_page = page
                     st.rerun()
-        
-        # 注册表单
+            
+            st.markdown("---")
+            
+            # 用户操作
+            st.markdown('<div style="color: #3498db; font-weight: 700; margin-bottom: 1rem;">⚙️ 设置</div>', unsafe_allow_html=True)
+            
+            if st.button("🚪 退出登录", use_container_width=True):
+                logout_user()
         else:
-            st.markdown("### 创建新账户")
+            # 未登录状态
+            st.markdown('<div style="color: #3498db; font-weight: 700; margin-bottom: 1rem;">👤 用户</div>', unsafe_allow_html=True)
             
-            reg_username = st.text_input(
-                "用户名",
-                placeholder="4-20个字符",
-                key="reg_username"
-            )
-            reg_email = st.text_input(
-                "邮箱",
-                placeholder="example@email.com",
-                key="reg_email"
-            )
-            reg_password = st.text_input(
-                "密码",
-                type="password",
-                placeholder="至少8个字符",
-                key="reg_password"
-            )
-            reg_confirm = st.text_input(
-                "确认密码",
-                type="password",
-                placeholder="再次输入密码",
-                key="reg_confirm"
-            )
+            if st.button("🔐 登录", use_container_width=True, type="primary"):
+                st.session_state.current_page = "login"
+                st.rerun()
             
-            col_submit1, col_submit2 = st.columns(2)
-            with col_submit1:
-                if st.button("✓ 注册", use_container_width=True, type="primary", key="register_btn"):
-                    if all([reg_username, reg_email, reg_password, reg_confirm]):
-                        register_user(reg_username, reg_email, reg_password, reg_confirm)
-                    else:
-                        st.error("❌ 请填写所有字段")
+            if st.button("📝 注册", use_container_width=True):
+                st.session_state.current_page = "register"
+                st.rerun()
             
-            with col_submit2:
-                if st.button("✕ 取消", use_container_width=True, key="cancel_register"):
-                    st.session_state.show_auth_modal = False
-                    st.rerun()
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("---")
+            st.markdown("""
+            <div style="color: #95a5a6; font-size: 12px; line-height: 1.6; margin-top: 2rem;">
+                💡 <b>提示</b>: 点击 <b>登录</b> 或 <b>注册</b> 按钮开始使用 GeologAI 平台
+            </div>
+            """, unsafe_allow_html=True)
 
-# ======================== 未登录状态 - 首页 ========================
+# ======================== 页面内容 ========================
 
-if not st.session_state.auth_token:
-    # 英雄区域
+def page_home():
+    """首页"""
     st.markdown("""
-    <div class="hero">
-        <h1 class="hero-title">🌍 地球物理AI分析平台</h1>
+    <div class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: -2rem -2rem 0; padding: 5rem 2rem; border-radius: 0;">
+        <h1 class="hero-title">🌍 GeologAI</h1>
         <p class="hero-subtitle">
-            利用先进的机器学习和深度学习技术，
-            自动化分析测井数据，提高地球物理解释效率
+            AI 驱动的地质智能分析平台
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # 功能介绍
     st.markdown("""
     <div class="features-section">
         <h2 class="section-title">核心功能</h2>
@@ -656,127 +441,410 @@ if not st.session_state.auth_token:
             <div class="feature-card">
                 <div class="feature-icon">📤</div>
                 <div class="feature-name">数据上传</div>
-                <div class="feature-desc">支持LAS、CSV和Excel格式</div>
+                <div class="feature-desc">支持 LAS、CSV 和 Excel 格式</div>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📈</div>
-                <div class="feature-name">曲线分析</div>
+                <div class="feature-name">数据分析</div>
                 <div class="feature-desc">交互式可视化与对比分析</div>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-name">3D可视化</div>
-                <div class="feature-desc">三维交互式钻孔轨迹</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔴</div>
-                <div class="feature-name">实时数据</div>
-                <div class="feature-desc">流式数据与监控</div>
-            </div>
-            <div class="feature-card">
                 <div class="feature-icon">🤖</div>
-                <div class="feature-name">AI预测</div>
-                <div class="feature-desc">机器学习自动预测</div>
+                <div class="feature-name">AI 预测</div>
+                <div class="feature-desc">机器学习驱动的预测分析</div>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🎓</div>
                 <div class="feature-name">模型训练</div>
-                <div class="feature-desc">自定义AI模型训练</div>
+                <div class="feature-desc">自定义AI模型训练与优化</div>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🧠</div>
-                <div class="feature-name">深度学习</div>
-                <div class="feature-desc">神经网络配置与监控</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <div class="feature-name">实时预测</div>
-                <div class="feature-desc">流式推理与批量评估</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <div class="feature-name">模型解释</div>
-                <div class="feature-desc">SHAP与特征分析</div>
+                <div class="feature-icon">🎯</div>
+                <div class="feature-name">3D 可视化</div>
+                <div class="feature-desc">三维交互式数据展示</div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+def page_login():
+    """登录页面"""
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("""
+        <div class="header-container">
+            <div class="header-title">🔐 用户登录</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        username = st.text_input("用户名", placeholder="输入用户名")
+        password = st.text_input("密码", type="password", placeholder="输入密码")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("登录", use_container_width=True, type="primary"):
+                if not username or not password:
+                    st.error("❌ 用户名和密码不能为空")
+                else:
+                    with st.spinner("正在登录..."):
+                        success, message = login_user(username, password)
+                        if success:
+                            st.success(message)
+                            st.session_state.current_page = "dashboard"
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ {message}")
+        
+        with col2:
+            if st.button("返回", use_container_width=True):
+                st.session_state.current_page = "home"
+                st.rerun()
+
+def page_register():
+    """注册页面"""
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("""
+        <div class="header-container">
+            <div class="header-title">📝 新用户注册</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        username = st.text_input("用户名", placeholder="4-20 个字符")
+        email = st.text_input("邮箱", placeholder="example@email.com")
+        password = st.text_input("密码", type="password", placeholder="至少 8 个字符")
+        password_confirm = st.text_input("确认密码", type="password", placeholder="再次输入密码")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("注册", use_container_width=True, type="primary"):
+                if not all([username, email, password, password_confirm]):
+                    st.error("❌ 请填写所有字段")
+                else:
+                    with st.spinner("正在注册..."):
+                        success, message = register_user(username, email, password, password_confirm)
+                        if success:
+                            st.success(message)
+                            st.session_state.current_page = "login"
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ {message}")
+        
+        with col2:
+            if st.button("返回", use_container_width=True):
+                st.session_state.current_page = "home"
+                st.rerun()
+
+def page_dashboard():
+    """仪表板"""
+    st.markdown("""
+    <div class="header-container">
+        <div class="header-title">📊 仪表板</div>
+        <div class="header-subtitle">欢迎使用 GeologAI 地质智能分析平台</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    projects = get_projects()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{len(projects)}</div>
+            <div class="metric-label">📁 项目总数</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        total_data = sum(len(get_project_data(p.get('id') or p.get('project_id'))) 
+                        for p in projects if p.get('id') or p.get('project_id'))
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{total_data}</div>
+            <div class="metric-label">💾 数据集</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">24</div>
+            <div class="metric-label">🤖 模型库</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">12</div>
+            <div class="metric-label">✨ 任务</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; color: white; padding: 2rem;">
-        <p style="font-size: 16px;">
-            💡 <b>准备好开始了吗？</b> 点击上方 <b>🔐 登录</b> 或 <b>📝 注册</b> 按钮进入平台
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# ======================== 已登录状态 - 仪表盘 ========================
-
-else:
-    # Dashboard 头部
-    st.markdown("""
-    <div class="dashboard-header">
-        <div>
-            <div class="welcome-text">👋 欢迎，{}</div>
-            <div style="font-size: 14px; color: #999; margin-top: 0.25rem;">
-                准备好分析数据了吗？
-            </div>
-        </div>
-    </div>
-    """.format(st.session_state.user_info.get("username", "用户")), unsafe_allow_html=True)
     
-    # 快速操作
-    st.markdown("### ⚡ 快速操作")
+    st.subheader("⚡ 快速操作")
+    
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("📁 新建项目", use_container_width=True):
-            st.switch_page("pages/02_projects.py")
+        if st.button("➕ 创建项目", use_container_width=True):
+            st.session_state.current_page = "projects"
+            st.rerun()
     
     with col2:
         if st.button("📤 上传数据", use_container_width=True):
-            st.switch_page("pages/03_data_upload.py")
+            st.session_state.current_page = "data_upload"
+            st.rerun()
     
     with col3:
         if st.button("📈 分析数据", use_container_width=True):
-            st.switch_page("pages/04_analysis.py")
-    
-    st.markdown("---")
-    
-    # 功能模块网格
-    st.markdown("### 🚀 功能模块")
-    
-    modules = [
-        ("📁 项目管理", "pages/02_projects.py", "创建和管理项目"),
-        ("📤 数据上传", "pages/03_data_upload.py", "上传测井数据"),
-        ("📈 曲线分析", "pages/04_analysis.py", "分析和可视化"),
-        ("🤖 AI预测", "pages/05_predictions.py", "机器学习预测"),
-        ("🎓 模型训练", "pages/06_model_training.py", "训练自定义模型"),
-        ("🎯 3D可视化", "pages/07_3d_visualization.py", "三维交互"),
-        ("🔴 实时数据", "pages/09_realtime_data.py", "流式数据监控"),
-        ("🧠 深度学习", "pages/10_deep_learning.py", "神经网络"),
-        ("⚡ 实时预测", "pages/11_realtime_predictions.py", "流式推理"),
-        ("🔍 模型解释", "pages/12_model_interpretability.py", "特征解释"),
-    ]
-    
-    cols = st.columns(5)
-    for idx, (name, page, desc) in enumerate(modules):
-        with cols[idx % 5]:
-            if st.button(name, use_container_width=True, help=desc):
-                st.switch_page(page)
-    
-    st.markdown("---")
+            st.session_state.current_page = "analysis"
+            st.rerun()
+
+def page_projects():
+    """项目管理"""
     st.markdown("""
-    <div style="
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        color: #999;
-        font-size: 14px;
-    ">
-        💡 提示：使用上方功能按钮快速导航到不同的模块
+    <div class="header-container">
+        <div class="header-title">📁 项目管理</div>
+        <div class="header-subtitle">创建和管理您的项目</div>
     </div>
     """, unsafe_allow_html=True)
+    
+    tab1, tab2 = st.tabs(["📋 项目列表", "➕ 创建项目"])
+    
+    with tab1:
+        projects = get_projects()
+        
+        if projects:
+            for project in projects:
+                project_name = project.get('name', 'Untitled')
+                project_type = project.get('type', '')
+                project_desc = project.get('description', '')
+                
+                st.markdown(f"""
+                <div class="card">
+                    <div class="card-title">{project_name}</div>
+                    <div style="color: #7f8c8d; margin-bottom: 0.5rem;">
+                        📌 类型: {project_type}
+                    </div>
+                    <div style="color: #95a5a6;">
+                        📝 {project_desc if project_desc else "暂无描述"}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("💡 暂无项目，请创建新项目")
+    
+    with tab2:
+        st.subheader("➕ 创建新项目")
+        
+        with st.form("create_project_form"):
+            project_name = st.text_input("项目名称", placeholder="输入项目名称")
+            project_type = st.selectbox(
+                "项目类型",
+                ["地震数据分析", "测井数据分析", "矿产评估", "油气勘探", "其他"]
+            )
+            project_desc = st.text_area("项目描述", placeholder="项目简介", height=100)
+            
+            col1, col2 = st.columns([1, 4])
+            
+            with col1:
+                if st.form_submit_button("✅ 创建"):
+                    if not project_name:
+                        st.error("❌ 项目名称不能为空")
+                    else:
+                        with st.spinner("正在创建..."):
+                            success, message = create_project(project_name, project_type, project_desc)
+                            if success:
+                                st.success(message)
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.error(f"❌ {message}")
+
+def page_data_upload():
+    """数据上传"""
+    st.markdown("""
+    <div class="header-container">
+        <div class="header-title">📤 数据上传</div>
+        <div class="header-subtitle">上传测井数据（LAS、CSV、Excel）</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    projects = get_projects()
+    
+    if not projects:
+        st.warning("⚠️ 请先创建项目")
+        return
+    
+    project_dict = {}
+    for p in projects:
+        p_id = p.get('id') or p.get('project_id')
+        if p_id:
+            project_dict[p_id] = p.get('name', 'Untitled')
+    
+    if not project_dict:
+        st.warning("⚠️ 项目列表为空")
+        return
+    
+    selected_project_id = st.selectbox(
+        "选择项目",
+        list(project_dict.keys()),
+        format_func=lambda x: project_dict[x]
+    )
+    
+    st.markdown("---")
+    
+    with st.form("upload_form"):
+        well_name = st.text_input("井号/井名", placeholder="输入井号")
+        data_type = st.selectbox("数据格式", ["LAS", "CSV", "Excel", "其他"])
+        uploaded_file = st.file_uploader("选择文件", type=["las", "csv", "xlsx", "xls"])
+        description = st.text_area("数据描述", placeholder="数据相关信息", height=80)
+        
+        if st.form_submit_button("✅ 上传"):
+            if not well_name:
+                st.error("❌ 井号不能为空")
+            elif not uploaded_file:
+                st.error("❌ 请选择文件")
+            else:
+                with st.spinner("正在上传..."):
+                    success, message = upload_data(selected_project_id, well_name, uploaded_file, description)
+                    if success:
+                        st.success(message)
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {message}")
+
+def page_analysis():
+    """数据分析"""
+    st.markdown("""
+    <div class="header-container">
+        <div class="header-title">📈 数据分析</div>
+        <div class="header-subtitle">分析和可视化测井数据</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    projects = get_projects()
+    
+    if not projects:
+        st.warning("⚠️ 请先创建项目")
+        return
+    
+    project_dict = {}
+    for p in projects:
+        p_id = p.get('id') or p.get('project_id')
+        if p_id:
+            project_dict[p_id] = p.get('name', 'Untitled')
+    
+    if not project_dict:
+        st.warning("⚠️ 项目列表为空")
+        return
+    
+    selected_project_id = st.selectbox(
+        "选择项目",
+        list(project_dict.keys()),
+        format_func=lambda x: project_dict[x],
+        key="analysis_project"
+    )
+    
+    data_list = get_project_data(selected_project_id)
+    
+    if not data_list:
+        st.info("💡 该项目暂无数据，请先上传数据")
+        return
+    
+    well_names = [d.get("well_name", "未知") for d in data_list]
+    selected_idx = st.selectbox("选择数据", range(len(data_list)), 
+                               format_func=lambda x: well_names[x])
+    
+    if selected_idx is not None:
+        data_item = data_list[selected_idx]
+        
+        st.markdown("---")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("行数", data_item.get("rows_count", 0))
+        
+        with col2:
+            st.metric("文件大小", f"{data_item.get('file_size', 0) / 1024:.1f} KB")
+        
+        with col3:
+            st.metric("上传时间", data_item.get("uploaded_at", "N/A")[:10])
+        
+        st.markdown("---")
+        
+        analysis_type = st.selectbox(
+            "选择分析方式",
+            ["地层识别", "异常检测", "趋势预测", "质量评估"]
+        )
+        
+        if st.button("🚀 开始分析", type="primary", use_container_width=True):
+            st.info(f"✨ 正在进行 {analysis_type} 分析...")
+            st.success("✅ 分析完成！")
+
+def page_predictions():
+    """AI 预测"""
+    st.markdown("""
+    <div class="header-container">
+        <div class="header-title">🤖 AI 预测</div>
+        <div class="header-subtitle">使用机器学习进行预测分析</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.info("🔨 此功能正在开发中...")
+
+def page_training():
+    """模型训练"""
+    st.markdown("""
+    <div class="header-container">
+        <div class="header-title">🎓 模型训练</div>
+        <div class="header-subtitle">训练自定义机器学习模型</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.info("🔨 此功能正在开发中...")
+
+# ======================== 主程序入口 ========================
+
+def main():
+    """主程序"""
+    
+    # 渲染侧边栏
+    render_sidebar()
+    
+    # 根据页面状态显示对应内容
+    if not st.session_state.auth_token:
+        if st.session_state.current_page == "login":
+            page_login()
+        elif st.session_state.current_page == "register":
+            page_register()
+        else:
+            page_home()
+    else:
+        if st.session_state.current_page == "projects":
+            page_projects()
+        elif st.session_state.current_page == "data_upload":
+            page_data_upload()
+        elif st.session_state.current_page == "analysis":
+            page_analysis()
+        elif st.session_state.current_page == "predictions":
+            page_predictions()
+        elif st.session_state.current_page == "training":
+            page_training()
+        else:
+            page_dashboard()
+
+if __name__ == "__main__":
+    main()
 
