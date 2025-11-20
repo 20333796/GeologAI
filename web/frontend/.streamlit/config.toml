@@ -1,9 +1,0 @@
-[client]
-toolbarMode = "minimal"
-
-[browser]
-gatherUsageStats = false
-
-[logger]
-level = "error"
-
